@@ -1,0 +1,32 @@
+# study-liu Web 版一键部署（2C2G 服务器实测配置）
+# 用法：
+#   docker compose up -d --build
+# 然后浏览器访问 http://<服务器IP>:8000
+#
+# 注意：国内服务器不要绑域名（ICP 备案要 1~3 周，来不及），
+# 直接 IP:端口 访问，完全满足比赛"可在线访问链接"的要求。
+
+services:
+  web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: study-liu
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # 数据持久化（知识库/进度/缓存/配置），容器重建不丢
+      - studyliu_data:/app/backend/data
+      # 前端静态文件：改前端不用重 build 镜像
+      - ./frontend:/app/frontend:ro
+    env_file:
+      - ./backend/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  studyliu_data:

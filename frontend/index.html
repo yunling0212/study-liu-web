@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>study-liu · 学习智能助手</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+  <!-- ===== 顶栏 ===== -->
+  <header class="topbar">
+    <div class="brand">📘 study-liu <span class="brand-sub">学习智能助手</span></div>
+    <div class="topbar-right">
+      <span id="mode-badge" class="badge">检查中…</span>
+      <button id="lang-toggle" class="ghost-btn" onclick="toggleLang()">🌐 EN</button>
+      <button id="theme-toggle" class="ghost-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </header>
+
+  <!-- ===== 导航 ===== -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="plan" onclick="switchTab('plan')">🎯 生成方案</button>
+    <button class="tab" data-tab="chat" onclick="switchTab('chat')">💬 课程问答</button>
+    <button class="tab" data-tab="knowledge" onclick="switchTab('knowledge')">📚 知识库</button>
+    <button class="tab" data-tab="progress" onclick="switchTab('progress')">✅ 我的进度</button>
+    <button class="tab" data-tab="screenshot" onclick="switchTab('screenshot')">📷 截图讲解</button>
+  </nav>
+
+  <main class="container">
+
+    <!-- ===== Tab 1: 生成方案 ===== -->
+    <section id="tab-plan" class="panel active">
+      <div class="card">
+        <h2 data-i18n="plan_title">想学什么？</h2>
+        <p class="hint" data-i18n="plan_hint">输入课程名，多智能体为你定制个性化学习方案</p>
+        <div class="form-row">
+          <input id="course-input" type="text" placeholder="例如：高等数学 / 大学物理 / Python 深度学习" data-i18n-ph="plan_placeholder">
+          <button id="generate-btn" class="primary-btn" onclick="generatePlan()" data-i18n="plan_btn">生成方案</button>
+        </div>
+        <details class="profile-box">
+          <summary data-i18n="plan_profile">⚙ 个性化设置（水平 / 时长 / 目标 / 截止日）</summary>
+          <div class="profile-grid">
+            <label><span data-i18n="plan_level">水平</span>
+              <select id="pf-level"><option>入门</option><option>进阶</option><option>冲刺</option></select>
+            </label>
+            <label><span data-i18n="plan_hours">每日时长</span>
+              <select id="pf-hours"><option>1h</option><option selected>2h</option><option>4h</option></select>
+            </label>
+            <label><span data-i18n="plan_goal">目标</span>
+              <select id="pf-goal"><option>考试</option><option>项目</option><option selected>兴趣</option></select>
+            </label>
+            <label><span data-i18n="plan_deadline">截止日</span>
+              <input id="pf-deadline" type="date">
+            </label>
+          </div>
+        </details>
+        <div id="plan-status" class="status"></div>
+      </div>
+      <div id="plan-result" class="card hidden">
+        <!-- 方案结果由 JS 渲染 -->
+      </div>
+    </section>
+
+    <!-- ===== Tab 2: 课程问答 ===== -->
+    <section id="tab-chat" class="panel">
+      <div class="card chat-card">
+        <div id="chat-log" class="chat-log">
+          <div class="chat-empty" data-i18n="chat_empty">向学习助手提问吧 —— 知识库里的笔记会优先作答</div>
+        </div>
+        <div class="form-row">
+          <input id="chat-input" type="text" placeholder="例如：二重积分 / 反向传播 / 不确定度" data-i18n-ph="chat_placeholder"
+                 onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="primary-btn" onclick="sendChat()" data-i18n="chat_send">发送</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Tab 3: 知识库 ===== -->
+    <section id="tab-knowledge" class="panel">
+      <div class="card">
+        <div class="kb-toolbar">
+          <input id="kb-search" type="text" placeholder="🔍 搜索笔记…" onkeydown="if(event.key==='Enter')searchNotes()">
+          <button class="ghost-btn" onclick="searchNotes()" data-i18n="kb_search">搜索</button>
+          <button class="ghost-btn" onclick="showAddNote()" data-i18n="kb_add">＋ 新增</button>
+          <button class="ghost-btn" onclick="showPasteImport()" data-i18n="kb_paste">📥 粘贴导入</button>
+          <label class="ghost-btn file-btn">📄 文件导入<input type="file" id="kb-file" accept=".pdf,.md,.txt,.markdown" onchange="importFile(this)" hidden></label>
+        </div>
+        <div id="kb-list" class="kb-list"></div>
+      </div>
+    </section>
+
+    <!-- ===== Tab 4: 我的进度 ===== -->
+    <section id="tab-progress" class="panel">
+      <div class="card">
+        <h2 data-i18n="prog_title">历史课程与进度</h2>
+        <div id="progress-list" class="progress-list"></div>
+      </div>
+      <div id="progress-detail" class="card hidden"></div>
+    </section>
+
+    <!-- ===== Tab 5: 截图讲解 ===== -->
+    <section id="tab-screenshot" class="panel">
+      <div class="card">
+        <h2 data-i18n="shot_title">📷 截图讲解</h2>
+        <p class="hint" id="shot-hint">把不懂的题目/知识点截图，AI 助教帮你讲明白</p>
+        <div id="shot-paste-area">
+          <textarea id="shot-text" rows="6" placeholder="把截图里的文字粘贴到这里（公式用文字描述，如 x^2 + y^2）" data-i18n-ph="shot_placeholder"></textarea>
+          <input id="shot-hint-input" type="text" placeholder="补充说明（可选）：比如'第二步为什么交换积分次序'">
+        </div>
+        <button class="primary-btn" onclick="explainScreenshot()" data-i18n="shot_btn">让 AI 讲解</button>
+        <div id="shot-result" class="shot-result hidden"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    study-liu · 粤港澳大湾区 AI Coding 创新大赛 · 多智能体学习助手
+  </footer>
+
+  <script src="/assets/js/i18n.js"></script>
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/app.js"></script>
+</body>
+</html>
