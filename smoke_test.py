@@ -4,7 +4,7 @@
 import os
 import sys
 
-BACKEND = r"c:\Users\ASUS\WorkBuddy\20260918150307\study-liu-web\backend"
+BACKEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend")
 sys.path.insert(0, BACKEND)
 os.chdir(BACKEND)  # 让 data_dir 落在 backend/data
 
